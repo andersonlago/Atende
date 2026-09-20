@@ -20,6 +20,12 @@ import blockedRoutes from './modules/blocked/blocked.routes';
 import bhRoutes from './modules/business-hours/bh.routes';
 import metricsRoutes from './modules/metrics/metrics.routes';
 import webhookRoutes from './modules/webhooks/webhook.routes';
+import rateLimitRoutes from './modules/rate-limit/rate-limit.routes';
+import auditRoutes from './modules/audit/audit.routes';
+import connectionRoutes from './modules/connection/connection.routes';
+import internalNoteRoutes from './modules/notes/notes.routes';
+import reportRoutes from './modules/reports/reports.routes';
+import gdprRoutes from './modules/gdpr/gdpr.routes';
 
 const app = express();
 const server = http.createServer(app);
@@ -49,6 +55,12 @@ app.use('/api/blocked', blockedRoutes);
 app.use('/api/business-hours', bhRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/rate-limit', rateLimitRoutes);
+app.use('/api/audit', auditRoutes);
+app.use('/api/connection', connectionRoutes);
+app.use('/api/notes', internalNoteRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/gdpr', gdprRoutes);
 
 // Health check
 app.get('/api/health', async (req, res) => {

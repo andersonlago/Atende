@@ -21,15 +21,20 @@ model Attendant {
   updatedAt    DateTime @updatedAt
   chats        Chat[]
   canned       CannedResponse[]
+  auditLogs    AuditLog[]
 }
 
 model Contact {
-  id        String   @id @default(uuid())
-  phone     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  chats     Chat[]
-  tags      Tag[]
+  id            String     @id @default(uuid())
+  phone         String     @unique
+  name          String?
+  consentGiven  Boolean    @default(false)
+  consentDate   DateTime?
+  anonymizedAt  DateTime?
+  createdAt     DateTime   @default(now())
+  chats         Chat[]
+  tags          Tag[]
+  internalNotes InternalNote[]
 }
 
 model Chat {
@@ -58,6 +63,7 @@ model Message {
   mediaMime   String?
   mediaSize   Int?
   waMessageId String?
+  isInternal  Boolean  @default(false)
   createdAt   DateTime @default(now())
   chat        Chat     @relation(fields: [chatId], references: [id])
 }
@@ -103,6 +109,8 @@ model BlockedContact {
   phone     String   @unique
   reason    String?
   blockedBy String
+  expiresAt DateTime?
+  isTemporary Boolean @default(false)
   createdAt DateTime @default(now())
 }
 
@@ -126,4 +134,46 @@ model SatisfactionSurvey {
   rating    Int
   comment   String?
   createdAt DateTime @default(now())
+}
+
+model RateLimit {
+  id        String   @id @default(uuid())
+  phone     String
+  windowStart DateTime
+  count     Int      @default(0)
+  @@unique([phone, windowStart])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  attendantId String?
+  attendant   Attendant? @relation(fields: [attendantId], references: [id])
+  action      String
+  resource    String
+  resourceId  String?
+  details     String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+}
+
+model InternalNote {
+  id        String   @id @default(uuid())
+  contactId String
+  contact   Contact  @relation(fields: [contactId], references: [id])
+  attendantId String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ConnectionStatus {
+  id            String   @id @default(uuid())
+  sessionId     String   @unique
+  status        String   @default("DISCONNECTED")
+  lastSeen      DateTime?
+  qrCode        String?
+  errorMessage  String?
+  reconnectAttempts Int  @default(0)
+  updatedAt     DateTime @updatedAt
 }
