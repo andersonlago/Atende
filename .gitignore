@@ -1,75 +1,48 @@
 ```
 # Dependencies
 node_modules/
-backend/node_modules/
-frontend/node_modules/
 
 # Build outputs
-backend/dist/
-backend/build/
-frontend/dist/
-frontend/build/
-build/
 dist/
-
-# Prisma
-backend/prisma/migrations/
+build/
+target/
 
 # Environment variables
 .env
 .env.local
-.env.*
+*.env.*
 
-# TypeScript
-*.tsbuildinfo
-*.js.map
-*.d.ts
-
-# Logs
-*.log
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Editor files
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Runtime data
-pids
-*.pid
-*.seed
+# Logs
+*.log
 
-# Coverage directory used by tools like istanbul
+# Python cache (if any Python files exist in the project)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Temporary files
+*.tmp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Coverage reports
 coverage/
-*.lcov
+htmlcov/
+*.coverage
 
-# Temporary folders
-tmp/
-temp/
+# TypeScript/JavaScript build artifacts
+*.js.map
+*.tsbuildinfo
 
-# Compiled JavaScript
-backend/src/**/*.js
-backend/src/**/*.js.map
-frontend/src/**/*.js
-frontend/src/**/*.js.map
-
-# Docker
-.dockerenv
-!Dockerfile
-!docker-compose.yml
-
-# Nginx
-!nginx/nginx.conf
-
-# Runtime
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Local development
-.env.example
+# Prisma
+prisma/migrations/
 ```
