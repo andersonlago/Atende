@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Attendant {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("ATTENDANT")
+  status       String   @default("OFFLINE")
+  mode         String   @default("SUGGEST")
+  activeChats  Int      @default(0)
+  maxChats     Int      @default(5)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  chats        Chat[]
+  canned       CannedResponse[]
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  chats     Chat[]
+  tags      Tag[]
+}
+
+model Chat {
+  id          String     @id @default(uuid())
+  waChatId    String     @unique
+  contactId   String
+  attendantId String?
+  status      String     @default("WAITING")
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  contact     Contact    @relation(fields: [contactId], references: [id])
+  attendant   Attendant? @relation(fields: [attendantId], references: [id])
+  messages    Message[]
+  @@index([contactId, status])
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  chatId      String
+  direction   String
+  type        String   @default("text")
+  content     String
+  mediaUrl    String?
+  mediaMime   String?
+  mediaSize   Int?
+  waMessageId String?
+  createdAt   DateTime @default(now())
+  chat        Chat     @relation(fields: [chatId], references: [id])
+}
+
+model CannedResponse {
+  id          String    @id @default(uuid())
+  attendantId String
+  attendant   Attendant @relation(fields: [attendantId], references: [id])
+  title       String
+  content     String
+  createdAt   DateTime  @default(now())
+}
+
+model Tag {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  color    String    @default("#10b981")
+  contacts Contact[]
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Invitation {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  token     String   @unique
+  name      String
+  maxChats  Int      @default(5)
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model BlockedContact {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  reason    String?
+  blockedBy String
+  createdAt DateTime @default(now())
+}
+
+model BusinessHours {
+  id        String  @id @default(uuid())
+  dayOfWeek Int
+  openTime  String
+  closeTime String
+  enabled   Boolean @default(true)
+}
+
+model AutoMessage {
+  id      String @id @default(uuid())
+  type    String @unique
+  content String
+}
+
+model SatisfactionSurvey {
+  id        String   @id @default(uuid())
+  chatId    String   @unique
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+}
