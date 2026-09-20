@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: atend-postgres
+    environment:
+      POSTGRES_USER: atend
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_DB: atendimento
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atend -d atendimento"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - atend-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: atend-redis
+    command: redis-server --requirepass redissecret
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - atend-network
+
+  waha:
+    image: devlikeapro/waha:latest
+    container_name: atend-waha
+    ports:
+      - "3001:3000"
+    environment:
+      WAHA_SESSION_NAME: main
+      API_KEY: waha-api-key
+      DASHBOARD_PASSWORD: wahadashpass
+    volumes:
+      - wahadata:/var/lib/waha
+      - wahamedia:/var/lib/waha/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - atend-network
+
+  anythingllm:
+    image: mintplexlabs/anythingllm:latest
+    container_name: atend-anythingllm
+    ports:
+      - "3002:3002"
+    environment:
+      JWT_SECRET: ${ALLM_JWT_SECRET}
+      LLM_PROVIDER: ${ALLM_LLM_PROVIDER}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - allmdata:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - atend-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: atend-backend
+    environment:
+      DATABASE_URL: postgresql://atend:supersecret@postgres:5432/atendimento
+      REDIS_PASSWORD: redissecret
+      REDIS_URL: redis://:redissecret@redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 4000
+      APP_URL: ${APP_URL}
+      WAHA_URL: http://waha:3000
+      WAHA_API_KEY: waha-api-key
+      WAHA_SESSION_NAME: main
+      ALLM_URL: http://anythingllm:3002/api/v1
+      ALLM_WORKSPACE_SLUG: ${ALLM_WORKSPACE_SLUG}
+      ALLM_API_KEY: ${ALLM_API_KEY}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
+    volumes:
+      - mediadata:/app/data/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - atend-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: atend-frontend
+    environment:
+      VITE_API_URL: /api
+      VITE_WS_URL: /
+    depends_on:
+      - backend
+    networks:
+      - atend-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: atend-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - mediadata:/app/data/media:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - atend-network
+
+volumes:
+  pgdata:
+  redisdata:
+  wahadata:
+  wahamedia:
+  allmdata:
+  mediadata:
+
+networks:
+  atend-network:
+    driver: bridge
